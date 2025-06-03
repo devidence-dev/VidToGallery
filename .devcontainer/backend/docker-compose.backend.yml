@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ../..:/workspace:cached
+      - backend_go_cache:/go/pkg/mod
+    ports:
+      - "8080:8080"
+    networks:
+      - vidtogallery-network
+    environment:
+      - GO_ENV=development
+      - REDIS_URL=redis://redis:6379
+    working_dir: /workspace/backend
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - vidtogallery-network
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+networks:
+  vidtogallery-network:
+    driver: bridge
+    name: vidtogallery-network
+
+volumes:
+  backend_go_cache:
+  redis_data:

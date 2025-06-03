@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ../..:/workspace:cached
+      - frontend_node_modules:/workspace/frontend/node_modules
+    ports:
+      - "5173:5173"
+    networks:
+      - vidtogallery-network
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:8080
+    working_dir: /workspace/frontend
+
+networks:
+  vidtogallery-network:
+    external: true
+    name: vidtogallery-network
+
+volumes:
+  frontend_node_modules:
