@@ -1,0 +1,97 @@
+basePath: /
+definitions:
+  models.ErrorResponse:
+    properties:
+      code:
+        type: string
+      details:
+        type: string
+      error:
+        type: string
+    type: object
+  models.VideoRequest:
+    properties:
+      quality:
+        type: string
+      url:
+        type: string
+    required:
+    - url
+    type: object
+  models.VideoResponse:
+    properties:
+      duration:
+        type: integer
+      metadata:
+        additionalProperties:
+          type: string
+        type: object
+      platform:
+        type: string
+      processed_at:
+        type: string
+      quality:
+        type: string
+      title:
+        type: string
+      video_url:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@vidtogallery.com
+    name: VidToGallery API Support
+  description: API for downloading videos from social media platforms (Instagram,
+    Twitter/X, YouTube)
+  title: VidToGallery API
+  version: 1.0.0
+paths:
+  /api/v1/process:
+    post:
+      consumes:
+      - application/json
+      description: Extract video download URL from social media platform
+      parameters:
+      - description: Video URL to process
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.VideoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Video processed successfully
+          schema:
+            $ref: '#/definitions/models.VideoResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Process video URL
+      tags:
+      - Video Processing
+  /health:
+    get:
+      description: Check if the API is running and healthy
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: API is healthy
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Health check endpoint
+      tags:
+      - Health
+schemes:
+- http
+- https
+swagger: "2.0"

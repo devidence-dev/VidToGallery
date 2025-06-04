@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/sirupsen/logrus"
+	fiberSwagger "github.com/swaggo/fiber-swagger"
 
 	"vidtogallery/pkg/downloader"
 )
@@ -23,9 +24,13 @@ func SetupRoutes(app *fiber.App, downloaderService *downloader.Service, log *log
 	// Initialize handlers
 	handler := NewHandler(downloaderService, log)
 
+	// Swagger documentation
+	app.Get("/swagger/*", fiberSwagger.WrapHandler)
+
+	// Health endpoint (outside of API group for simple access)
+	app.Get("/health", handler.HealthCheck)
+
 	// API routes
 	api := app.Group("/api/v1")
-	
 	api.Post("/process", handler.ProcessVideo)
-	api.Get("/health", handler.HealthCheck)
 }

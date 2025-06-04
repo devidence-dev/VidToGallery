@@ -19,7 +19,8 @@ type Config struct {
 		DB       int
 	}
 	Cache struct {
-		TTL time.Duration
+		TTL      time.Duration
+		VideoTTL time.Duration
 	}
 	Download struct {
 		MaxConcurrent int
@@ -47,6 +48,7 @@ func Load() (*Config, error) {
 	cfg.Redis.DB = getEnvAsInt("REDIS_DB", 0)
 
 	cfg.Cache.TTL = getEnvAsDuration("CACHE_TTL", 24*time.Hour)
+	cfg.Cache.VideoTTL = getEnvAsDuration("VIDEO_CACHE_TTL", 24*time.Hour)
 
 	cfg.Download.MaxConcurrent = getEnvAsInt("MAX_CONCURRENT_DOWNLOADS", 5)
 	cfg.Download.Timeout = getEnvAsDuration("DOWNLOAD_TIMEOUT", 30*time.Second)

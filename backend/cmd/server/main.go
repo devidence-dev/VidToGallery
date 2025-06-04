@@ -1,3 +1,24 @@
+// VidToGallery API
+//
+// API for downloading videos from social media platforms (Instagram, Twitter/X, YouTube)
+//
+//	Title: VidToGallery API
+//	Description: Extract video URLs from social media platforms for direct download
+//	Version: 1.0.0
+//	Host: localhost:8080
+//	BasePath: /
+//	Schemes: http, https
+//
+//	Contact: VidToGallery API Support <support@vidtogallery.com>
+//
+// @title VidToGallery API
+// @description API for downloading videos from social media platforms (Instagram, Twitter/X, YouTube)
+// @version 1.0.0
+// @host localhost:8080
+// @BasePath /
+// @schemes http https
+// @contact.name VidToGallery API Support
+// @contact.email support@vidtogallery.com
 package main
 
 import (
@@ -7,7 +28,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 
+	_ "vidtogallery/docs" // Import generated docs
 	"vidtogallery/pkg/api"
+	"vidtogallery/pkg/cache"
 	"vidtogallery/pkg/config"
 	"vidtogallery/pkg/downloader"
 )
@@ -31,8 +54,12 @@ func main() {
 		logger.SetFormatter(&logrus.JSONFormatter{})
 	}
 
+	// Initialize cache service
+	cacheService := cache.NewService(cfg, logger)
+	defer cacheService.Close()
+
 	// Initialize downloader service
-	downloaderService := downloader.NewService(cfg.Download.MaxConcurrent, cfg)
+	downloaderService := downloader.NewService(cfg.Download.MaxConcurrent, cfg, cacheService)
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{

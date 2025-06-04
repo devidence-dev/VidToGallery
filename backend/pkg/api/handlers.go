@@ -23,6 +23,17 @@ func NewHandler(downloaderService *downloader.Service, logger *logrus.Logger) *H
 	}
 }
 
+// ProcessVideo processes a video URL and returns download information
+// @Summary Process video URL
+// @Description Extract video download URL from social media platform
+// @Tags Video Processing
+// @Accept json
+// @Produce json
+// @Param request body models.VideoRequest true "Video URL to process"
+// @Success 200 {object} models.VideoResponse "Video processed successfully"
+// @Failure 400 {object} models.ErrorResponse "Invalid request"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /api/v1/process [post]
 func (h *Handler) ProcessVideo(c *fiber.Ctx) error {
 	var req models.VideoRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -57,14 +68,21 @@ func (h *Handler) ProcessVideo(c *fiber.Ctx) error {
 	}
 
 	h.logger.WithFields(logrus.Fields{
-		"url":      req.URL,
-		"platform": response.Platform,
+		"url":       req.URL,
+		"platform":  response.Platform,
 		"video_url": response.VideoURL,
 	}).Info("Video processed successfully")
 
 	return c.JSON(response)
 }
 
+// HealthCheck returns the health status of the API
+// @Summary Health check endpoint
+// @Description Check if the API is running and healthy
+// @Tags Health
+// @Produce json
+// @Success 200 {object} map[string]interface{} "API is healthy"
+// @Router /health [get]
 func (h *Handler) HealthCheck(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"status":    "ok",

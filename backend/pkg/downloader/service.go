@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"vidtogallery/internal/models"
+	"vidtogallery/pkg/cache"
 	"vidtogallery/pkg/config"
 )
 
@@ -15,19 +16,22 @@ type Downloader interface {
 }
 
 type Service struct {
-	downloaders map[string]Downloader
-	workers     chan struct{}
-	mu          sync.RWMutex
+	downloaders  map[string]Downloader
+	workers      chan struct{}
+	mu           sync.RWMutex
+	cacheService *cache.Service
 }
 
-func NewService(maxConcurrent int, cfg *config.Config) *Service {
+func NewService(maxConcurrent int, cfg *config.Config, cacheService *cache.Service) *Service {
 	service := &Service{
-		downloaders: make(map[string]Downloader),
-		workers:     make(chan struct{}, maxConcurrent),
+		downloaders:  make(map[string]Downloader),
+		workers:      make(chan struct{}, maxConcurrent),
+		cacheService: cacheService,
 	}
 
 	// Register downloaders with configuration
 	service.RegisterDownloader("instagram", NewInstagramDownloaderWithConfig(cfg))
+	service.RegisterDownloader("twitter", NewTwitterDownloaderWithConfig(cfg))
 
 	return service
 }
@@ -51,6 +55,11 @@ func (s *Service) DetectPlatform(url string) string {
 }
 
 func (s *Service) ProcessURL(ctx context.Context, url string) (*models.VideoResponse, error) {
+	// Try to get from cache first
+	if cachedVideo, found := s.cacheService.GetVideo(ctx, url); found {
+		return cachedVideo, nil
+	}
+
 	// Acquire worker slot
 	select {
 	case s.workers <- struct{}{}:
@@ -68,5 +77,15 @@ func (s *Service) ProcessURL(ctx context.Context, url string) (*models.VideoResp
 	downloader := s.downloaders[platform]
 	s.mu.RUnlock()
 
-	return downloader.ExtractVideoURL(url)
+	video, err := downloader.ExtractVideoURL(url)
+	if err != nil {
+		return nil, err
+	}
+
+	// Cache the result
+	if err := s.cacheService.SetVideo(ctx, url, video); err != nil {
+		// Log error but don't fail the request
+	}
+
+	return video, nil
 }

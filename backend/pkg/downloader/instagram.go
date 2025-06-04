@@ -108,7 +108,7 @@ func (d *InstagramDownloader) parseInstagramResponse(data []byte) (string, strin
 	}
 
 	item := items[0].(map[string]interface{})
-	
+
 	// Try to get video URL
 	var videoURL string
 	var title string
