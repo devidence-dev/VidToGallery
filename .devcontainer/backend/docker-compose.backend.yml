@@ -5,9 +5,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: vidtogallery-backend:latest
     volumes:
-      - ../..:/workspace:cached
-      - backend_go_cache:/go/pkg/mod
+      - ../../backend:/workspace:cached
     ports:
       - "8080:8080"
     networks:
@@ -15,7 +15,6 @@ services:
     environment:
       - GO_ENV=development
       - REDIS_URL=redis://redis:6379
-    working_dir: /workspace/backend
     depends_on:
       - redis
 

@@ -1,7 +1,7 @@
-FROM golang:1.21-bullseye
+FROM golang:1.24.3-bookworm
 
 # Dev command to run Go Fiber with live reload:
-# go install github.com/cosmtrek/air@latest && air
+# go install github.com/air-verse/air@latest && air
 
 WORKDIR /workspace
 
@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Air for hot reload in development
-RUN go install github.com/cosmtrek/air@latest
+RUN go install github.com/air-verse/air@latest
 
 # Keep container alive for development
 CMD ["sleep", "infinity"]

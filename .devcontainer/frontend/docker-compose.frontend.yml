@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: vidtogallery-frontend:latest
     volumes:
       - ../..:/workspace:cached
       - frontend_node_modules:/workspace/frontend/node_modules
