@@ -3,7 +3,10 @@ package downloader
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"sync"
+	"time"
 
 	"vidtogallery/internal/models"
 	"vidtogallery/pkg/cache"
@@ -13,50 +16,36 @@ import (
 type Downloader interface {
 	ValidateURL(url string) bool
 	ExtractVideoURL(url string) (*models.VideoResponse, error)
+	ExtractVideoURLWithQuality(url string, quality string) (*models.VideoResponse, error)
 }
 
 type Service struct {
-	downloaders  map[string]Downloader
+	downloader   *UniversalDownloader
 	workers      chan struct{}
 	mu           sync.RWMutex
 	cacheService *cache.Service
 }
 
 func NewService(maxConcurrent int, cfg *config.Config, cacheService *cache.Service) *Service {
-	service := &Service{
-		downloaders:  make(map[string]Downloader),
+	return &Service{
+		downloader:   NewUniversalDownloaderWithConfig(cfg),
 		workers:      make(chan struct{}, maxConcurrent),
 		cacheService: cacheService,
 	}
-
-	// Register downloaders with configuration
-	service.RegisterDownloader("instagram", NewInstagramDownloaderWithConfig(cfg))
-	service.RegisterDownloader("twitter", NewTwitterDownloaderWithConfig(cfg))
-
-	return service
-}
-
-func (s *Service) RegisterDownloader(platform string, downloader Downloader) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.downloaders[platform] = downloader
 }
 
 func (s *Service) DetectPlatform(url string) string {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	for platform, downloader := range s.downloaders {
-		if downloader.ValidateURL(url) {
-			return platform
-		}
-	}
-	return ""
+	return s.downloader.DetectPlatform(url)
 }
 
 func (s *Service) ProcessURL(ctx context.Context, url string) (*models.VideoResponse, error) {
+	return s.ProcessURLWithQuality(ctx, url, "best")
+}
+
+func (s *Service) ProcessURLWithQuality(ctx context.Context, url string, quality string) (*models.VideoResponse, error) {
 	// Try to get from cache first
-	if cachedVideo, found := s.cacheService.GetVideo(ctx, url); found {
+	cacheKey := fmt.Sprintf("%s:%s", url, quality)
+	if cachedVideo, found := s.cacheService.GetVideo(ctx, cacheKey); found {
 		return cachedVideo, nil
 	}
 
@@ -68,24 +57,64 @@ func (s *Service) ProcessURL(ctx context.Context, url string) (*models.VideoResp
 		return nil, ctx.Err()
 	}
 
-	platform := s.DetectPlatform(url)
-	if platform == "" {
-		return nil, fmt.Errorf("unsupported platform or invalid URL")
-	}
-
-	s.mu.RLock()
-	downloader := s.downloaders[platform]
-	s.mu.RUnlock()
-
-	video, err := downloader.ExtractVideoURL(url)
+	// Use universal downloader
+	video, err := s.downloader.ExtractVideoURLWithQuality(url, quality)
 	if err != nil {
 		return nil, err
 	}
 
-	// Cache the result
-	if err := s.cacheService.SetVideo(ctx, url, video); err != nil {
+	// Cache the result with quality-specific key
+	if err := s.cacheService.SetVideo(ctx, cacheKey, video); err != nil {
 		// Log error but don't fail the request
 	}
 
 	return video, nil
+}
+
+func (s *Service) GetAvailableQualities(ctx context.Context, url string) (*models.QualitiesResponse, error) {
+	return s.downloader.GetAvailableQualities(url)
+}
+
+// ProxyDownload downloads video through backend to avoid CORS issues
+func (s *Service) ProxyDownload(ctx context.Context, videoURL string) (*models.ProxyDownloadResponse, error) {
+	s.workers <- struct{}{}
+	defer func() { <-s.workers }()
+
+	// Check cache first
+	if s.cacheService != nil {
+		if cachedData, err := s.cacheService.GetVideoFile(ctx, videoURL); err == nil && cachedData != nil {
+			return &models.ProxyDownloadResponse{
+				Data: cachedData,
+			}, nil
+		}
+	}
+
+	// Download video file
+	response, err := http.Get(videoURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to download video: %w", err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to download video: HTTP %d", response.StatusCode)
+	}
+
+	// Read video data
+	data, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read video data: %w", err)
+	}
+
+	// Cache the video file with 5 minute expiration
+	if s.cacheService != nil {
+		if err := s.cacheService.CacheVideoFile(ctx, videoURL, data, 5*time.Minute); err != nil {
+			// Log error but don't fail the request
+			fmt.Printf("Failed to cache video file: %v\n", err)
+		}
+	}
+
+	return &models.ProxyDownloadResponse{
+		Data: data,
+	}, nil
 }

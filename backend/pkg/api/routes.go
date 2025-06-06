@@ -32,5 +32,7 @@ func SetupRoutes(app *fiber.App, downloaderService *downloader.Service, log *log
 
 	// API routes
 	api := app.Group("/api/v1")
-	api.Post("/process", handler.ProcessVideo)
+	api.Post("/download", handler.DownloadVideo)
+	api.Post("/qualities", handler.GetQualities)
+	api.Post("/proxy-download", handler.ProxyDownload)
 }

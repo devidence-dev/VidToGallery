@@ -1,4 +1,4 @@
-FROM node:20-slim
+FROM node:22.4-bookworm-slim
 
 # Dev command to run Svelte in development mode with hot reload:
 # npm run dev -- --host 0.0.0.0 --port 5173

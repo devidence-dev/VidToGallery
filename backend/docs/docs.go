@@ -18,9 +18,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/process": {
+        "/api/v1/download": {
             "post": {
-                "description": "Extract video download URL from social media platform",
+                "description": "Download video from social media platform with specified quality",
                 "consumes": [
                     "application/json"
                 ],
@@ -30,10 +30,10 @@ const docTemplate = `{
                 "tags": [
                     "Video Processing"
                 ],
-                "summary": "Process video URL",
+                "summary": "Download video with quality",
                 "parameters": [
                     {
-                        "description": "Video URL to process",
+                        "description": "Video URL and quality to download",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -44,9 +44,101 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Video processed successfully",
+                        "description": "Video downloaded successfully",
                         "schema": {
                             "$ref": "#/definitions/models.VideoResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/proxy-download": {
+            "post": {
+                "description": "Download video file through backend proxy to avoid CORS restrictions",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "Video Processing"
+                ],
+                "summary": "Proxy download video file",
+                "parameters": [
+                    {
+                        "description": "Video URL to proxy download",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ProxyDownloadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Video file",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/qualities": {
+            "post": {
+                "description": "Get list of available video qualities for a social media URL",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Video Processing"
+                ],
+                "summary": "Get available video qualities",
+                "parameters": [
+                    {
+                        "description": "Video URL to check qualities for",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.QualityRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Available qualities retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.QualitiesResponse"
                         }
                     },
                     "400": {
@@ -101,6 +193,62 @@ const docTemplate = `{
                 }
             }
         },
+        "models.ProxyDownloadRequest": {
+            "type": "object",
+            "required": [
+                "video_url"
+            ],
+            "properties": {
+                "video_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.QualitiesResponse": {
+            "type": "object",
+            "properties": {
+                "available_qualities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.QualityOption"
+                    }
+                },
+                "platform": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.QualityOption": {
+            "type": "object",
+            "properties": {
+                "height": {
+                    "type": "integer"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "quality": {
+                    "type": "string"
+                },
+                "video_url": {
+                    "type": "string"
+                },
+                "width": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.QualityRequest": {
+            "type": "object",
+            "required": [
+                "url"
+            ],
+            "properties": {
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "models.VideoRequest": {
             "type": "object",
             "required": [
@@ -118,6 +266,12 @@ const docTemplate = `{
         "models.VideoResponse": {
             "type": "object",
             "properties": {
+                "available_qualities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.QualityOption"
+                    }
+                },
                 "duration": {
                     "type": "integer"
                 },

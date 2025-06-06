@@ -9,6 +9,42 @@ definitions:
       error:
         type: string
     type: object
+  models.ProxyDownloadRequest:
+    properties:
+      video_url:
+        type: string
+    required:
+    - video_url
+    type: object
+  models.QualitiesResponse:
+    properties:
+      available_qualities:
+        items:
+          $ref: '#/definitions/models.QualityOption'
+        type: array
+      platform:
+        type: string
+    type: object
+  models.QualityOption:
+    properties:
+      height:
+        type: integer
+      label:
+        type: string
+      quality:
+        type: string
+      video_url:
+        type: string
+      width:
+        type: integer
+    type: object
+  models.QualityRequest:
+    properties:
+      url:
+        type: string
+    required:
+    - url
+    type: object
   models.VideoRequest:
     properties:
       quality:
@@ -20,6 +56,10 @@ definitions:
     type: object
   models.VideoResponse:
     properties:
+      available_qualities:
+        items:
+          $ref: '#/definitions/models.QualityOption'
+        type: array
       duration:
         type: integer
       metadata:
@@ -47,13 +87,13 @@ info:
   title: VidToGallery API
   version: 1.0.0
 paths:
-  /api/v1/process:
+  /api/v1/download:
     post:
       consumes:
       - application/json
-      description: Extract video download URL from social media platform
+      description: Download video from social media platform with specified quality
       parameters:
-      - description: Video URL to process
+      - description: Video URL and quality to download
         in: body
         name: request
         required: true
@@ -63,7 +103,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Video processed successfully
+          description: Video downloaded successfully
           schema:
             $ref: '#/definitions/models.VideoResponse'
         "400":
@@ -74,7 +114,67 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/models.ErrorResponse'
-      summary: Process video URL
+      summary: Download video with quality
+      tags:
+      - Video Processing
+  /api/v1/proxy-download:
+    post:
+      consumes:
+      - application/json
+      description: Download video file through backend proxy to avoid CORS restrictions
+      parameters:
+      - description: Video URL to proxy download
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.ProxyDownloadRequest'
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Video file
+          schema:
+            type: file
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Proxy download video file
+      tags:
+      - Video Processing
+  /api/v1/qualities:
+    post:
+      consumes:
+      - application/json
+      description: Get list of available video qualities for a social media URL
+      parameters:
+      - description: Video URL to check qualities for
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.QualityRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Available qualities retrieved successfully
+          schema:
+            $ref: '#/definitions/models.QualitiesResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Get available video qualities
       tags:
       - Video Processing
   /health:

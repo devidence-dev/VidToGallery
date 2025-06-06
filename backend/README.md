@@ -194,6 +194,57 @@ ENV=development
 
 ## 🚀 Development
 
+### 🏗️ Architecture
+
+```mermaid
+graph TD
+    A[🌐 Client/Frontend] --> B[📡 HTTP API Layer]
+    
+    B --> C[🎯 Handlers]
+    C --> D[⚙️ Service Layer]
+    
+    D --> E[📥 Downloader Service]
+    E --> F[🔍 Platform Detection]
+    
+    F --> G[📱 Twitter Downloader]
+    F --> H[📸 Instagram Downloader] 
+    F --> I[🎬 YouTube Downloader]
+    
+    G --> J[🎨 Quality Manager]
+    H --> J
+    I --> J
+    
+    J --> K[📊 Quality Selection]
+    J --> L[🏷️ Quality Labeling]
+    J --> M[📏 Resolution Sorting]
+    
+    D --> N[💾 Cache Service]
+    N --> O[🔴 Redis Store]
+    
+    G --> P[🐦 FxTwitter API]
+    H --> Q[📷 Instagram API]
+    I --> R[🎥 YouTube Player API]
+    
+    style A fill:#e1f5fe
+    style B fill:#f3e5f5
+    style D fill:#e8f5e8
+    style E fill:#fff3e0
+    style J fill:#fce4ec
+    style N fill:#f1f8e9
+    style O fill:#ffebee
+```
+
+### 📋 Component Responsibilities
+
+| Component | Responsibility |
+|-----------|---------------|
+| 🌐 **HTTP API** | REST endpoints & request handling |
+| ⚙️ **Service Layer** | Business logic orchestration |
+| 📥 **Downloader Service** | Platform detection & video processing |
+| 🎨 **Quality Manager** | Quality selection & resolution handling |
+| 💾 **Cache Service** | Redis-based caching layer |
+| 📱 **Platform Downloaders** | Platform-specific video extraction |
+
 ### 📁 Project Structure
 
 ```

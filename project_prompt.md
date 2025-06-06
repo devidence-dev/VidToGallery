@@ -1,7 +1,7 @@
 
 ```markdown
 # Video Saver Web App (iOS Focused) Named : VidToGallery
-**Stack**: Go (Fiber) + Svelte 5 + Raspberry Pi ARM64
+**Stack**: Go (Fiber) + Vuejs (vant) + Raspberry Pi ARM64
 
 ## **Requisitos Técnicos**
 1. **Arquitectura Modular**
@@ -17,7 +17,7 @@
    ├── frontend/
    │   ├── src/
    │   │   ├── lib/
-   │   │   ├── stores/      # Svelte stores reactivos
+   │   │   ├── stores/      # vuejs stores reactivos
    │   │   └── components/  # UI optimizada para iOS
    │   └── package.json
    └── infra/
@@ -57,10 +57,10 @@
    }
    ```
 
-4. **Frontend iOS-Optimizado (Svelte)**
+4. **Frontend iOS-Optimizado (vuejs)**
    - **Componentes Esenciales**:
      ```
-     // VideoInput.svelte
+     // VideoInput.vuejs
      
        let url = '';
        export let onProcess = () => {};
@@ -111,7 +111,7 @@
 ## **Entregables Esperados**
 - [ ] Docker-compose.yml con servicios: app, redis, caddy
 - [ ] Script de post-instalación para Raspberry Pi OS
-- [ ] Componente Svelte con preview del video antes de descargar
+- [ ] Componente vuejs con preview del video antes de descargar
 - [ ] API documentation en formato OpenAPI 3.0
 - [ ] Sistema de logging unificado (FluentBit)
 ```
@@ -121,5 +121,5 @@
 **Consideraciones Clave Extraídas de los Search Results**:
 1. Usar `navigator.share()` para iOS Photo Library [4]
 2. Implementar auto-rotación de User-Agents similar a yt-dlp [1][2]
-3. Optimizar builds Svelte para <50KB (MDN guidelines [3])
+3. Optimizar builds vuejs para <50KB (MDN guidelines [3])
 4. Incluir sistema de colas para evitar bloqueos en Raspberry Pi [5]
