@@ -2,9 +2,11 @@
 import VideoInput from '@/components/VideoInput.vue'
 import VideoPreview from '@/components/VideoPreview.vue'
 import { useVideoStore } from '@/stores/video'
+import { usePWA } from '@/composables/usePWA'
 
 const videoStore = useVideoStore()
 const { error } = videoStore
+const { showInstallPrompt, installApp, isInstalled } = usePWA()
 </script>
 
 <template>
@@ -17,6 +19,19 @@ const { error } = videoStore
         </div>
         <h1 class="hero-title">VidToGallery</h1>
         <p class="hero-subtitle">Download your videos directly to your iOS gallery</p>
+        
+        <!-- PWA Install Button -->
+        <div v-if="showInstallPrompt && !isInstalled" class="install-button">
+          <van-button 
+            type="primary" 
+            size="small"
+            @click="installApp"
+            plain
+          >
+            <van-icon name="plus" />
+            Install App
+          </van-button>
+        </div>
       </div>
       <div class="hero-decoration"></div>
     </header>
@@ -129,8 +144,23 @@ const { error } = videoStore
 .hero-subtitle {
   font-size: 16px;
   color: rgba(255, 255, 255, 0.9);
-  margin: 0;
+  margin: 0 0 16px 0;
   font-weight: 400;
+}
+
+.install-button {
+  margin-top: 16px;
+}
+
+.install-button .van-button {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.install-button .van-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .hero-decoration {
@@ -164,6 +194,7 @@ const { error } = videoStore
   z-index: 1;
   min-height: calc(100vh - 200px);
   padding: 24px 16px;
+  width: 100%;
 }
 
 .card-container {
@@ -172,6 +203,7 @@ const { error } = videoStore
   display: flex;
   flex-direction: column;
   gap: 20px;
+  width: 100%;
 }
 
 .input-card,
@@ -292,13 +324,43 @@ const { error } = videoStore
 }
 
 @media (min-width: 769px) {
+  .home {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .hero-header {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .content {
+    width: 100%;
+    max-width: 1200px;
+    padding: 40px 24px;
+    border-radius: 24px;
+    margin-top: -24px;
+  }
+  
   .card-container {
     max-width: 800px;
   }
   
   .input-card,
   .preview-card {
-    padding: 24px;
+    padding: 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .content {
+    max-width: 1400px;
+    padding: 48px 32px;
+  }
+  
+  .card-container {
+    max-width: 1000px;
   }
 }
 </style>

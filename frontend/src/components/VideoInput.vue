@@ -2,45 +2,29 @@
   <div class="video-input">
     <div class="input-row">
       <van-cell-group class="input-field">
-        <van-field
-          v-model="localUrl"
-          label="Video URL"
-          placeholder="Paste video URL here"
-          @input="onInput"
-          @update:model-value="onModelValueUpdate"
-        >
+        <van-field v-model="localUrl" label="" placeholder="Paste video URL here" @input="onInput"
+          @update:model-value="onModelValueUpdate">
           <template #left-icon>
             <van-icon name="video" />
           </template>
         </van-field>
       </van-cell-group>
-      
+
       <div class="field-buttons">
-        <van-button
-          plain
-          type="primary"
-          @click="pasteFromClipboard"
-        >
-          <van-icon name="completed" />
+        <van-button plain type="primary" @click="pasteFromClipboard" size="small">
+          <van-icon name="notes" />
+          Paste
         </van-button>
-        
-        <van-button
-          plain
-          type="primary" 
-          @click="resetForm"
-        >
+
+        <van-button plain type="primary" @click="resetForm" size="small">
           <van-icon name="replay" />
+          Clear
         </van-button>
       </div>
     </div>
-    
+
     <div class="button-container">
-      <van-button 
-        type="primary" 
-        block
-        :disabled="!localUrl"
-        @click="handleGetQualities"
-      >
+      <van-button type="primary" block :disabled="!localUrl" @click="handleGetQualities">
         <van-icon name="search" />
         Check Qualities
       </van-button>
@@ -54,25 +38,17 @@
           </template>
           <template #input>
             <van-radio-group v-model="selectedQuality" direction="vertical">
-              <van-radio 
-                v-for="qualityOption in availableQualities" 
-                :key="qualityOption.quality"
-                :name="qualityOption.quality"
-              >
+              <van-radio v-for="qualityOption in availableQualities" :key="qualityOption.quality"
+                :name="qualityOption.quality">
                 {{ qualityOption.label }}
               </van-radio>
             </van-radio-group>
           </template>
         </van-field>
       </van-cell-group>
-      
+
       <div class="download-container">
-        <van-button
-          type="primary"
-          block
-          :disabled="!selectedQuality"
-          @click="handleDownload"
-        >
+        <van-button type="primary" block :disabled="!selectedQuality" @click="handleDownload">
           <van-icon name="setting" />
           Process Video
         </van-button>
@@ -85,6 +61,7 @@
 import { ref, watch, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useVideoStore } from '@/stores/video'
+import { showSuccessToast, showFailToast } from 'vant'
 
 const videoStore = useVideoStore()
 const { qualitiesData, selectedQuality } = storeToRefs(videoStore)
@@ -94,19 +71,19 @@ const localUrl = ref('')
 // Computed property to get available qualities from qualitiesData
 const availableQualities = computed(() => {
   const qualities = qualitiesData.value?.available_qualities || []
-  
+
   // Sort qualities from best to worst
   const qualityOrder = ['best', 'best[height<=1350]', 'best[height<=900]', 'best[height<=800]', 'worst']
-  
+
   return qualities.sort((a, b) => {
     const indexA = qualityOrder.indexOf(a.quality)
     const indexB = qualityOrder.indexOf(b.quality)
-    
+
     // If quality not found in predefined order, put it at the end
     if (indexA === -1 && indexB === -1) return 0
     if (indexA === -1) return 1
     if (indexB === -1) return -1
-    
+
     return indexA - indexB
   })
 })
@@ -157,28 +134,43 @@ const onModelValueUpdate = (value: string) => {
 
 const pasteFromClipboard = async () => {
   try {
-    let text = ''
-    
-    if (navigator.clipboard && navigator.clipboard.readText) {
-      text = await navigator.clipboard.readText()
-    } else {
-      // Fallback: try to use execCommand
-      const textArea = document.createElement('textarea')
-      textArea.style.position = 'fixed'
-      textArea.style.opacity = '0'
-      document.body.appendChild(textArea)
-      textArea.focus()
-      document.execCommand('paste')
-      text = textArea.value
-      document.body.removeChild(textArea)
+    // Check if the Clipboard API is available
+    if (!navigator.clipboard) {
+      showFailToast({message: 'Clipboard API not available in this browser', wordBreak: 'break-word',})
+      return
     }
-    
-    if (text) {
-      localUrl.value = text
-      videoStore.url = text
+
+    // Request clipboard permission and read text
+    const text = await navigator.clipboard.readText()
+
+    if (text && text.trim()) {
+      localUrl.value = text.trim()
+      videoStore.url = text.trim()
+      showSuccessToast('URL pasted successfully!')
+    } else {
+      showFailToast({message: 'Clipboard is empty or contains no text', wordBreak: 'break-word',})
     }
   } catch (err) {
     console.error('Failed to read clipboard:', err)
+
+    // Handle specific permission errors
+    if (err instanceof Error) {
+      if (err.name === 'NotAllowedError') {
+        showFailToast({
+          message: 'Clipboard access denied. Please allow clipboard permissions in your browser.',
+          wordBreak: 'break-word',
+        })
+      } else if (err.name === 'NotFoundError') {
+        showFailToast({message: 'No text found in clipboard', wordBreak: 'break-word',})
+      } else {
+        showFailToast({
+          message: 'Failed to access clipboard. Try copying the URL again.',
+          wordBreak: 'break-word',
+        })
+      }
+    } else {
+      showFailToast({ message: 'Failed to access clipboard', wordBreak: 'break-word', })
+    }
   }
 }
 
@@ -206,8 +198,14 @@ const resetForm = () => {
 
 .field-buttons {
   display: flex;
-  gap: 4px;
+  gap: 8px;
   flex-direction: row;
+  align-items: flex-end;
+}
+
+.field-buttons .van-button {
+  min-width: 70px;
+  white-space: nowrap;
 }
 
 .button-container {
@@ -229,5 +227,9 @@ const resetForm = () => {
 .quality-field :deep(.van-field__label) {
   width: auto;
   align-self: center;
+}
+
+.van-icon-video {
+  color: #667eea;
 }
 </style>

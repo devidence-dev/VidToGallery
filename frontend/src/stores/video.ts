@@ -12,6 +12,7 @@ interface VideoData {
     method: string
     source: string
     tweet_id?: string
+    thumbnail?: string
   }
   processed_at: string
 }
