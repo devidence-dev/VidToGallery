@@ -41,7 +41,7 @@ func Load() (*Config, error) {
 	cfg := &Config{}
 
 	cfg.Server.Port = getEnv("PORT", "8080")
-	cfg.Server.Host = getEnv("HOST", "localhost")
+	cfg.Server.Host = getEnv("HOST", "0.0.0.0")
 
 	cfg.Redis.URL = getEnv("REDIS_URL", "redis://localhost:6379")
 	cfg.Redis.Password = getEnv("REDIS_PASSWORD", "")

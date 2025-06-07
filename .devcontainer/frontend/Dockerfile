@@ -9,6 +9,7 @@ WORKDIR /workspace
 RUN apt-get update && apt-get install -y \
     git \
     curl \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 # Keep container alive for development

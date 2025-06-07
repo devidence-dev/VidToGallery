@@ -4,6 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     image: vidtogallery-frontend:latest
+    container_name: vidtogallery-frontend
     volumes:
       - ../../frontend:/workspace:cached
     ports:
@@ -12,7 +13,7 @@ services:
       - vidtogallery-network
     environment:
       - NODE_ENV=development
-      - VITE_API_URL=http://localhost:8080
+      - VITE_API_URL=http://vidtogallery-backend:9000
 
 networks:
   vidtogallery-network:
